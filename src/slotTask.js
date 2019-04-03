@@ -54,8 +54,10 @@ function setup() {
     var reels = [];
     var reelContainer = new PIXI.Container();
     for (var i = 0; i < 5; i++) {
+        var bg = new PIXI.Container();
         var rc = new PIXI.Container();
-        rc.x = i * REEL_WIDTH;
+        bg.x = rc.x = i * REEL_WIDTH;
+        reelContainer.addChild(bg);
         reelContainer.addChild(rc);
         var reel = {
             container: rc,
@@ -72,9 +74,9 @@ function setup() {
             var background = PIXI.Sprite.fromImage("src/assets/img/winningFrameBackground.jpg");
             background.y = symbol.y = j * SYMBOL_SIZE;
             symbol.scale.x = symbol.scale.y = Math.min(SYMBOL_SIZE / symbol.width, SYMBOL_SIZE / symbol.height);
-            symbol.x = 25 || Math.round((SYMBOL_SIZE - symbol.width) / 2);
+            symbol.x = 25;
             reel.symbols.push(symbol);
-            //rc.addChild(background);
+            bg.addChild(background);
             rc.addChild(symbol);
         }
         reels.push(reel);
@@ -119,7 +121,8 @@ function setup() {
         running = true;
         for (var i = 0; i < reels.length; i++) {
             var r = reels[i];
-            tweenTo(r, "position", r.position + 10 + i * 5, 1500 + i * 600, backout(0.6), null, i == reels.length - 1 ? reelsComplete : null);
+            var extra = Math.floor(Math.random() * 5);
+            tweenTo(r, "position", r.position + 50 + i * 5 + extra, 500 + i * 600, backout(0.1), null, i == reels.length - 1 ? reelsComplete : null);
         }
     }
     function reelsComplete() {
@@ -137,7 +140,7 @@ function setup() {
                 if (s.y < 0 && prevy > SYMBOL_SIZE) {
                     s.texture = slotTextures[Math.floor(Math.random() * slotTextures.length)];
                     s.scale.x = s.scale.y = Math.min(SYMBOL_SIZE / s.texture.width, SYMBOL_SIZE / s.texture.height);
-                    s.x = Math.round((SYMBOL_SIZE - s.width) / 2);
+                    s.x = 25;
                 }
             }
         }
