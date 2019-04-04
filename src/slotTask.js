@@ -1,12 +1,21 @@
 import * as PIXI from 'pixi.js';
+import { Howl } from 'howler';
 var app;
 var REEL_WIDTH = 196;
 var SYMBOL_SIZE = 139;
 var BUTTON_SIZE = 160;
+var MARGIN_X = 30;
+var MARGIN_Y = 37;
+var landingSound = new Howl({
+    src: ['src/assets/sounds/Landing_1.mp3', 'src/assets/sounds/Landing_1.mp3']
+});
+var reelSound = new Howl({
+    src: ['src/assets/sounds/Reel_Spin.mp3', 'src/assets/sounds/Reel_Spin.mp3']
+});
 var model = {
     createCanvas: function () {
-        app = new PIXI.Application(980, 716, { backgroundColor: 0xffffff, antialias: true, transparent: false, resolution: 1 });
-        document.body.appendChild(app.view);
+        app = new PIXI.Application(1055, 770, { backgroundColor: 0xffffff, antialias: true, transparent: false, resolution: 1 });
+        document.getElementsByClassName("pixi")[0].appendChild(app.view);
         PIXI.loader
             .add("src/assets/img/symbols/01.png", "src/assets/img/symbols/01.png")
             .add("src/assets/img/symbols/02.png", "src/assets/img/symbols/02.png")
@@ -81,34 +90,22 @@ function setup() {
         }
         reels.push(reel);
     }
+    reelContainer.x = MARGIN_X;
+    reelContainer.y = MARGIN_Y;
     app.stage.addChild(reelContainer);
+    var top = new PIXI.Graphics();
+    top.beginFill(0xffffff);
+    top.drawRect(0, 0, app.screen.width, MARGIN_Y);
+    app.stage.addChild(top);
     var bottom = new PIXI.Graphics();
-    bottom.beginFill(0, 1);
-    bottom.drawRect(0, SYMBOL_SIZE * 4, app.screen.width, BUTTON_SIZE);
+    bottom.beginFill(0xffffff);
+    bottom.drawRect(0, SYMBOL_SIZE * 4 + MARGIN_Y, app.screen.width, BUTTON_SIZE);
     app.stage.addChild(bottom);
     var button = PIXI.Sprite.fromImage("src/assets/img/btn_spin_normal.png");
-    button.x = app.screen.width - BUTTON_SIZE;
-    button.y = SYMBOL_SIZE * 4;
+    button.x = app.screen.width / 2 - BUTTON_SIZE / 2;
+    button.y = SYMBOL_SIZE * 4 + MARGIN_Y + 10;
     button.scale.x = button.scale.y = SYMBOL_SIZE / BUTTON_SIZE;
     app.stage.addChild(button);
-    /*
-    let style = new PIXI.TextStyle({
-        fontFamily: 'Arial',
-        fontSize: 18,
-        fontStyle: 'italic',
-        fontWeight: 'bold',
-        fill: ['#ffffff', '#00ff99'], // gradient
-        stroke: '#4a1850',
-        strokeThickness: 5,
-        wordWrap: true,
-        wordWrapWidth: 440
-    });
-
-    let playText = new PIXI.Text('Spin', style);
-    playText.x = app.screen.width/2-17;
-    playText.y = SYMBOL_SIZE*4+30;
-    button.addChild(playText);*/
-    //app.stage.addChild(playText);
     button.interactive = true;
     button.buttonMode = true;
     button.addListener("pointerdown", function () {
@@ -145,6 +142,13 @@ function setup() {
             }
         }
     });
+    var slotOverlay = PIXI.Sprite.fromImage("src/assets/img/slotOverlay.png");
+    slotOverlay.x = 0;
+    slotOverlay.y = 0;
+    slotOverlay.width = app.screen.width;
+    slotOverlay.height = app.screen.height - BUTTON_SIZE;
+    //slotOverlay.scale.x = slotOverlay.scale.y = app.screen.height;
+    app.stage.addChild(slotOverlay);
 }
 var tweening = [];
 function tweenTo(object, property, target, time, easing, onchange, oncomplete) {
