@@ -1,5 +1,15 @@
 import * as PIXI from 'pixi.js';
-import {Howl} from 'howler';
+import {Howl, Howler} from 'howler';
+
+const landingSound = new Howl({
+    src: ['src/assets/sounds/Landing_1.mp3', 'src/assets/sounds/Landing_1.mp3'],
+    volume: 0.5
+});
+const reelSound = new Howl({
+    src: ['src/assets/sounds/Reel_Spin.mp3', 'src/assets/sounds/Reel_Spin.mp3'],
+    volume: 0.5,
+    loop: true
+});
 
 let app;
 let REEL_WIDTH = 196;
@@ -7,13 +17,6 @@ let SYMBOL_SIZE = 139;
 let BUTTON_SIZE = 160;
 let MARGIN_X = 30;
 let MARGIN_Y = 37;
-
-const landingSound = new Howl({
-    src: ['src/assets/sounds/Landing_1.mp3', 'src/assets/sounds/Landing_1.mp3']
-});
-const reelSound = new Howl({
-    src: ['src/assets/sounds/Reel_Spin.mp3', 'src/assets/sounds/Reel_Spin.mp3']
-});
 
 let model = {
     createCanvas: function() {
@@ -68,8 +71,16 @@ function setup()
         PIXI.Texture.fromImage("src/assets/img/symbols/13.png")
     ];
 
+    let buttonOn = PIXI.Texture.fromImage('src/assets/img/btn_spin_normal.png');
+    let buttonHover = PIXI.Texture.fromImage('src/assets/img/btn_spin_hover.png');
+    let buttonPressed = PIXI.Texture.fromImage('src/assets/img/btn_spin_pressed.png');
+    let buttonDisable = PIXI.Texture.fromImage('src/assets/img/btn_spin_disable.png');
+
     let reels = [];
     let reelContainer = new PIXI.Container();
+    reelContainer.x = MARGIN_X;
+    reelContainer.y = MARGIN_Y;
+
     for( let i = 0; i < 5; i++)
     {
         let bg = new PIXI.Container();
@@ -104,8 +115,6 @@ function setup()
         reels.push(reel);
     }
 
-    reelContainer.x = MARGIN_X;
-    reelContainer.y = MARGIN_Y;
     app.stage.addChild(reelContainer);
 
     let top = new PIXI.Graphics();
@@ -118,7 +127,7 @@ function setup()
     bottom.drawRect(0,SYMBOL_SIZE*4+MARGIN_Y,app.screen.width, BUTTON_SIZE);
     app.stage.addChild(bottom);
 
-    let button = PIXI.Sprite.fromImage("src/assets/img/btn_spin_normal.png");
+    let button = new PIXI.Sprite(buttonOn);
     button.x = app.screen.width/2 - BUTTON_SIZE/2;
     button.y = SYMBOL_SIZE*4+MARGIN_Y+10;
     button.scale.x = button.scale.y = SYMBOL_SIZE / BUTTON_SIZE;
@@ -126,15 +135,25 @@ function setup()
 
     button.interactive = true;
     button.buttonMode = true;
+    button
+    .on('pointerdown', onButtonDown)
+    .on('pointerup', onButtonUp)
+    .on('pointerupoutside', onButtonUp)
+    .on('pointerover', onButtonOver)
+    .on('pointerout', onButtonOut);
+
     button.addListener("pointerdown", function(){
-        startPlay();
+       startPlay();
     });
 
     let running = false;
+    reelSound.stop();
 
     function startPlay(){
+
         if(running) return;
         running = true;
+        reelSound.play();
 
         for(let i = 0; i < reels.length; i++)
         {
@@ -146,6 +165,47 @@ function setup()
 
     function reelsComplete(){
         running = false;
+        reelSound.stop();
+        landingSound.play();
+        button.texture = buttonOn;
+    }
+
+    function onButtonDown() {
+        if (running) {
+            return;
+        }
+        this.isdown = true;
+        this.texture = buttonPressed;
+        this.alpha = 1;
+    }
+
+    function onButtonUp() {
+        this.isdown = false;
+        if (this.isOver && !running) {
+            this.texture = buttonHover;
+        }
+        else if (this.isOver && running) {
+            this.texture = buttonDisable;
+        }
+        else {
+            this.texture = buttonOn;
+        }
+    }
+
+    function onButtonOver() {
+        this.isOver = true;
+        if (this.isdown || running) {
+            return;
+        }
+        this.texture = buttonPressed;
+    }
+
+    function onButtonOut() {
+        this.isOver = false;
+        if (this.isdown || running) {
+            return;
+        }
+        this.texture = buttonOn;
     }
 
     app.ticker.add(function() {
@@ -230,3 +290,4 @@ let backout = function(amount) {
         return (--t*t*((amount+1)*t + amount) + 1);
     };
 };
+

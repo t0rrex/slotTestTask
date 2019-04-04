@@ -1,17 +1,20 @@
 import * as PIXI from 'pixi.js';
 import { Howl } from 'howler';
+var landingSound = new Howl({
+    src: ['src/assets/sounds/Landing_1.mp3', 'src/assets/sounds/Landing_1.mp3'],
+    volume: 0.5
+});
+var reelSound = new Howl({
+    src: ['src/assets/sounds/Reel_Spin.mp3', 'src/assets/sounds/Reel_Spin.mp3'],
+    volume: 0.5,
+    loop: true
+});
 var app;
 var REEL_WIDTH = 196;
 var SYMBOL_SIZE = 139;
 var BUTTON_SIZE = 160;
 var MARGIN_X = 30;
 var MARGIN_Y = 37;
-var landingSound = new Howl({
-    src: ['src/assets/sounds/Landing_1.mp3', 'src/assets/sounds/Landing_1.mp3']
-});
-var reelSound = new Howl({
-    src: ['src/assets/sounds/Reel_Spin.mp3', 'src/assets/sounds/Reel_Spin.mp3']
-});
 var model = {
     createCanvas: function () {
         app = new PIXI.Application(1055, 770, { backgroundColor: 0xffffff, antialias: true, transparent: false, resolution: 1 });
@@ -60,8 +63,14 @@ function setup() {
         PIXI.Texture.fromImage("src/assets/img/symbols/12.png"),
         PIXI.Texture.fromImage("src/assets/img/symbols/13.png")
     ];
+    var buttonOn = PIXI.Texture.fromImage('src/assets/img/btn_spin_normal.png');
+    var buttonHover = PIXI.Texture.fromImage('src/assets/img/btn_spin_hover.png');
+    var buttonPressed = PIXI.Texture.fromImage('src/assets/img/btn_spin_pressed.png');
+    var buttonDisable = PIXI.Texture.fromImage('src/assets/img/btn_spin_disable.png');
     var reels = [];
     var reelContainer = new PIXI.Container();
+    reelContainer.x = MARGIN_X;
+    reelContainer.y = MARGIN_Y;
     for (var i = 0; i < 5; i++) {
         var bg = new PIXI.Container();
         var rc = new PIXI.Container();
@@ -90,8 +99,6 @@ function setup() {
         }
         reels.push(reel);
     }
-    reelContainer.x = MARGIN_X;
-    reelContainer.y = MARGIN_Y;
     app.stage.addChild(reelContainer);
     var top = new PIXI.Graphics();
     top.beginFill(0xffffff);
@@ -101,21 +108,29 @@ function setup() {
     bottom.beginFill(0xffffff);
     bottom.drawRect(0, SYMBOL_SIZE * 4 + MARGIN_Y, app.screen.width, BUTTON_SIZE);
     app.stage.addChild(bottom);
-    var button = PIXI.Sprite.fromImage("src/assets/img/btn_spin_normal.png");
+    var button = new PIXI.Sprite(buttonOn);
     button.x = app.screen.width / 2 - BUTTON_SIZE / 2;
     button.y = SYMBOL_SIZE * 4 + MARGIN_Y + 10;
     button.scale.x = button.scale.y = SYMBOL_SIZE / BUTTON_SIZE;
     app.stage.addChild(button);
     button.interactive = true;
     button.buttonMode = true;
+    button
+        .on('pointerdown', onButtonDown)
+        .on('pointerup', onButtonUp)
+        .on('pointerupoutside', onButtonUp)
+        .on('pointerover', onButtonOver)
+        .on('pointerout', onButtonOut);
     button.addListener("pointerdown", function () {
         startPlay();
     });
     var running = false;
+    reelSound.stop();
     function startPlay() {
         if (running)
             return;
         running = true;
+        reelSound.play();
         for (var i = 0; i < reels.length; i++) {
             var r = reels[i];
             var extra = Math.floor(Math.random() * 5);
@@ -124,6 +139,43 @@ function setup() {
     }
     function reelsComplete() {
         running = false;
+        reelSound.stop();
+        landingSound.play();
+        button.texture = buttonOn;
+    }
+    function onButtonDown() {
+        if (running) {
+            return;
+        }
+        this.isdown = true;
+        this.texture = buttonPressed;
+        this.alpha = 1;
+    }
+    function onButtonUp() {
+        this.isdown = false;
+        if (this.isOver && !running) {
+            this.texture = buttonHover;
+        }
+        else if (this.isOver && running) {
+            this.texture = buttonDisable;
+        }
+        else {
+            this.texture = buttonOn;
+        }
+    }
+    function onButtonOver() {
+        this.isOver = true;
+        if (this.isdown || running) {
+            return;
+        }
+        this.texture = buttonPressed;
+    }
+    function onButtonOut() {
+        this.isOver = false;
+        if (this.isdown || running) {
+            return;
+        }
+        this.texture = buttonOn;
     }
     app.ticker.add(function () {
         for (var i = 0; i < reels.length; i++) {
