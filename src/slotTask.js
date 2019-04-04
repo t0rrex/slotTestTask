@@ -168,7 +168,7 @@ function setup() {
         if (this.isdown || running) {
             return;
         }
-        this.texture = buttonPressed;
+        this.texture = buttonHover;
     }
     function onButtonOut() {
         this.isOver = false;
