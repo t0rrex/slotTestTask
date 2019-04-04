@@ -1,1 +1,1 @@
-# slotTestTask
+https://t0rrex.github.io/slotTestTask/
